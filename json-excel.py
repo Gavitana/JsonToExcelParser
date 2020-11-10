@@ -1,10 +1,13 @@
 import json
 import argparse
 import openpyxl
-import pandas as pd
+
+from db_classes import Card
 from pathlib import Path
 from config import LABELS
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
+
+
 # def parse_args(input_args=None):
 #     parser = argparse.ArgumentParser(description="Создает файл excel с необходимыми данными.")
 #     parser.add_argument("--input_path", help='Входной путь к файлу', required=True)
@@ -12,77 +15,59 @@ from openpyxl import load_workbook
 #     args = parser.parse_known_args(input_args)[0]
 #     return args
 
-def json_reader(filename, read=None):
+
+cards = []
+cards_projects = []
+def json_reader(filename, data=None):
     '''Открывает json-файл и конвертирует его в объект python'''
     with open(filename, 'r') as file:
-        read = json.load(file)
-    return read
+        data = json.load(file)
+    return data
 
 
-def get_cards(read):
-    cards = {'Номер карточки':[],
-             'Описание':[],
-             'Кто выполняет':[],
-             'Метки':[],
-             'Время создания':[]}
-    for card in read['cards']:
-        cards['Номер карточки'].append(card['_id'])
-        cards['Описание'].append(card['title'])
-        cards['Кто выполняет'].append(card['userId'])
-        cards['Метки'].append(" , ".join(card['labelIds']))
-        cards['Время создания'].append(card['createdAt'])
-    return cards
+def get_cards(data):
+    for card in data['cards']:
+        card = Card(id=card['_id'],
+                    title=card['title'],
+                    creator=card['userId'],
+                    labels=(" ".join(card['labelIds'])))
+        cards.append(card)
 
 
-def get_users_and_labels(read, users={}, labels={}):
+def result_table(read, users={}, labels={}):
     for user in read['users']:
         users[user['_id']] = user['username']
     for label in read['labels']:
         labels[label['_id']] = label['name']
-    return (users, labels)
+    for card in cards:
+        lab = card.labels
+        card.creator = users[card.creator]
+        card.labels = ' '.join([labels.get(lab, lab) for lab in lab.split()])
 
 
-def result_table(cards,users,labels):
-    new_user_list = []
-    new_labels_list = []
-    listt= []
-    for user in cards['Кто выполняет']:
-        user = users[user]
-        new_user_list.append(user)
-    for word in cards['Метки']:
-        new_labels_list.append(' '.join([labels.get(word,word) for word in word.split()]))
-    cards['Кто выполняет'] = new_user_list
-    cards['Метки'] = new_labels_list
-    return cards
-
-
-def new_table(g):
-    for i in g['Метки']:
-        for word in i:
-            if word in LABELS.values():
-                print(i)
-
-
+def create_table():
+    for card in cards:
+        for c in card.labels.split():
+            if c in LABELS.values():
+                card.labels = c
+                cards_projects.append(card)
 
 
 if __name__ == "__main__":
     a = json_reader('wekan.json')
-    cards = get_cards(a)
-    users, labels = get_users_and_labels(a)
-    result = result_table(cards=cards, users=users, labels=labels)
-    new_table(result)
-    # df = pd.DataFrame(result, index=result["Кто выполняет"], columns=["Номер карточки",
-    #                                                      "Описание",
-    #                                                      "Метки",
-    #                                                      "Время создания"] )
-    # df.reset_index(drop=False)
-    # df.to_excel('sdf.xlsx')
-    #
-    # workbook = load_workbook(filename='sdf.xlsx')
-    # sheet = workbook.active
-    # sheet.freeze_panes = "B2"
-    # sheet.auto_filter.ref = "A1:E1"
-    # workbook.save("sample.xlsx")
+    get_cards(a)
+    result_table(a)
+    create_table()
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(['Метки', 'Описание', 'Создатель'])
+    for card in cards_projects:
+        data = [card.labels, card.title, card.creator]
+        sheet.append(data)
+    sheet.freeze_panes = "B2"
+    sheet.auto_filter.ref = "A1:D1"
+    workbook.save(filename="oop_sample.xlsx")
+
 
 # def main():
 #     def main(input_args=None):
