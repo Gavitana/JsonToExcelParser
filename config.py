@@ -1,9 +1,1 @@
-LABELS = {
-        "AL7BEH":"kazahstan",
-        "JExKW4":"conveyor",
-        "JExKW4":"ЦифровойСоветчик",
-        "3qv7ii":"РЖД-Щебень",
-        "3LbTWh":"НКТ",
-        "yQHxfH":"evraz",
-        "NyhCXw":"НИК",
-        "BD8zcY":"kola"}
+LABELS =["kazahstan", "evraz-conveyor", "ЦифровойСоветчик", "РЖД-Щебень", "НКТ", "evraz", "НИК", "kola"]
