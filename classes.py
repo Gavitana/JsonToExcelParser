@@ -11,5 +11,11 @@ class Card:
 
 @dataclass
 class Result:
-    name: str
+    project: str
     hours: int = 0
+
+
+@dataclass
+class Creator:
+    creator: str = '-'
+    creator_hours: int = 0
