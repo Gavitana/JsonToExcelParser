@@ -1,15 +1,12 @@
 import json
 import argparse
+import pandas as pd
 from pathlib import Path
-from openpyxl.utils import FORMULAE
-from openpyxl.styles import Alignment
-from openpyxl import load_workbook, Workbook
-from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl import load_workbook
 
+from classes import Card
+from config import LABELS, TIME_LABELS, OTHER_LABELS
 from styles import set_style_cards, set_style_creators
-from classes import Card, Result, Creator
-from config import LABELS, TIME_LABELS
-
 
 
 def parse_args(input_args=None):
@@ -29,14 +26,14 @@ def json_reader(filename, data=None):
 
 def get_cards(data,cards = []):
     '''Создает объект список объектов из json-файла Card'''
-
     for card in data['cards']:
         card = Card(id=card['_id'],
-                    title=card['title'],
                     creator=card['userId'],
-                    labels=(", ".join(card['labelIds'])))
+                    labels=(", ".join(card['labelIds'])),
+                    title=card['title'])
         cards.append(card)
     return cards
+
 
 def change_id_to_name(data,cards,users={},labels={}):
     '''Изменяет все id объектов на имена'''
@@ -50,76 +47,44 @@ def change_id_to_name(data,cards,users={},labels={}):
         card.labels = ', '.join([labels.get(lab, lab) for lab in lab.split(', ')])
     return cards
 
+
 def filter_cards(cards,cards_projects=[]):
     '''Фильтрует карточки по названиям проектов'''
     for card in cards:
-        for label in card.labels.split(', '):
-             if label in TIME_LABELS:
+        labels = card.labels.split(', ')
+        for label in labels:
+            if label in TIME_LABELS:
                 card.hours += TIME_LABELS[label]
-             if label in LABELS:
+            if (label in OTHER_LABELS) and (label not in LABELS):
+                pass
+            if label in LABELS:
                 card.labels = label
                 cards_projects.append(card)
     return cards_projects
 
 
-def result_table(cards_projects, results=[], creators=[]):
-    '''Создает объект с количеством часов для каждого проекта'''
-    project_list=[]
-    creators_list=[]
-    for card in cards_projects:
-        result = Result(project=card.labels,
-                        hours=card.hours,
-                        )
-        if result.project not in project_list:
-            results.append(result)
-            project_list.append(result.project)
-        elif result.project in project_list:
-            for result in results:
-                if result.project == card.labels:
-                    result.hours += card.hours
-
-        creator = Creator(creator=card.creator,
-                          creator_hours=card.hours
-                          )
-        if creator.creator not in creators_list:
-            creators.append(creator)
-            creators_list.append(creator.creator)
-        elif creator.creator in creators_list:
-            for creator in creators:
-                if creator.creator == card.creator:
-                    creator.creator_hours += card.hours
-
-    return results, creators
-
-
-
-def create_xslx(path, cards_projects, results, creators):
-    '''Создает таблицы эксель'''
-    workbook = Workbook()
+def pandas_df(cards, path):
+    '''Создаёт таблицы excel'''
+    cards = pd.DataFrame(cards)
+    cards.to_excel(f'{path}/Cards.xlsx',index=False)
+    workbook = load_workbook(filename=f"{path}/Cards.xlsx")
     sheet = workbook.active
-    sheet.append(['Проект', 'Создатель', 'Описание', 'Часы'])
-    for card in cards_projects:
-        data = [card.labels, card.creator, card.title, card.hours]
-        sheet.append(data)
     set_style_cards(sheet)
-    workbook_res = Workbook()
-    sheet_res = workbook_res.active
-    sheet_res.append(['Проект','Часы'])
-    for result in results:
-        data = [result.project,result.hours]
-        sheet_res.append(data)
-    sheet_res.append([''])
-    sheet_res.append(['Сотрудник','Часы'])
-    n = len(sheet_res['A'])
-    for creator in creators:
-        data = [creator.creator, creator.creator_hours]
-        sheet_res.append(data)
-    set_style_creators(sheet_res, n)
-
-
     workbook.save(filename=f"{path}/Cards.xlsx")
-    workbook_res.save(filename=f"{path}/Projects.xlsx")
 
+    projects_sum = cards.groupby('labels').apply(lambda x: x.groupby('id').hours.first().sum()).reset_index(name='hours')
+    projects_sum.to_excel(f'{path}/Projects.xlsx', index=False)
+    workbook = load_workbook(filename=f"{path}/Projects.xlsx")
+    sheet = workbook.active
+    set_style_creators(sheet)
+    workbook.save(filename=f"{path}/Projects.xlsx")
+
+    employee_sum = cards.groupby('creator').apply(lambda x: x.groupby('id').hours.first().sum()).reset_index(name='hours')
+    employee_sum.to_excel(f'{path}/Employee.xlsx', index=False)
+    workbook = load_workbook(filename=f"{path}/Employee.xlsx")
+    sheet = workbook.active
+    set_style_creators(sheet, employee=True)
+    workbook.save(filename=f"{path}/Employee.xlsx")
 
 
 def main(input_args=None):
@@ -131,11 +96,7 @@ def main(input_args=None):
     cards = get_cards(data)
     cards = change_id_to_name(data, cards)
     cards_projects = filter_cards(cards)
-
-    results, creators = result_table(cards_projects)
-
-
-    create_xslx(output_path,cards_projects , results, creators)
+    pandas_df(cards_projects, output_path)
 
 
 if __name__ == "__main__":

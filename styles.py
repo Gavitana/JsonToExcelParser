@@ -18,10 +18,13 @@ def set_style_cards(sheet):
         cell.style = header
     col = sheet.column_dimensions['C']
     col.alignment = Alignment(horizontal='fill')
-    sheet.column_dimensions['A'].width = 18
-    sheet.column_dimensions['B'].width = 18
-    sheet.column_dimensions['C'].width = 18
-    sheet.column_dimensions['D'].width = 18
+    sheet['B1'] = "Сотрудник"
+    sheet['C1'] = "Проект"
+    sheet['D1'] = "Описание"
+    sheet['E1'] = "Часы"
+    sheet.delete_cols(1)
+    for i in 'ABCD':
+        sheet.column_dimensions[i].width = 18
     sheet.auto_filter.ref = "A1:B1"
     for i in 'ABCD':
         for cell in sheet[i]:
@@ -29,23 +32,25 @@ def set_style_cards(sheet):
                                    top=Side(border_style="thin"),
                                    left=Side(border_style="thin"),
                                    right=Side(border_style="thin"))
-
     return sheet
 
 
-def set_style_creators(sheet,n):
+def set_style_creators(sheet, employee=False):
     '''Форматирует таблицу'''
     sheet.column_dimensions['A'].width = 18
     sheet.column_dimensions['B'].width = 18
+    if employee:
+        sheet['A1'] = 'Сотрудник'
+    else:
+        sheet['A1'] = 'Проект'
+    sheet['B1'] = 'Часы'
     for cell in sheet[1]:
         cell.style = header
-    for cell in sheet[n]:
-        cell.style = header
-        for i in 'AB':
-            for cell in sheet[i]:
-                cell.border = Border(bottom=Side(border_style="thin"),
-                                       top=Side(border_style="thin"),
-                                       left=Side(border_style="thin"),
-                                       right=Side(border_style="thin"))
+    for i in 'AB':
+        for cell in sheet[i]:
+            cell.border = Border(bottom=Side(border_style="thin"),
+                                   top=Side(border_style="thin"),
+                                   left=Side(border_style="thin"),
+                                   right=Side(border_style="thin"))
 
     return sheet
