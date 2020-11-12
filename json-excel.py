@@ -50,16 +50,23 @@ def change_id_to_name(data,cards,users={},labels={}):
 
 def filter_cards(cards,cards_projects=[]):
     '''Фильтрует карточки по названиям проектов'''
+    sdf = []
+    fds = []
     for card in cards:
         labels = card.labels.split(', ')
         for label in labels:
+            if label in OTHER_LABELS:
+                sdf.append(card)
             if label in TIME_LABELS:
                 card.hours += TIME_LABELS[label]
-            if (label in OTHER_LABELS) and (label not in LABELS):
-                pass
             if label in LABELS:
                 card.labels = label
                 cards_projects.append(card)
+    for card in sdf:
+        labels = card.labels.split(', ')
+        for label in labels:
+            if label not in LABELS:
+                fds.append(card)
     return cards_projects
 
 
