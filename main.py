@@ -10,7 +10,7 @@ from styles import set_style_cards, set_style_creators
 
 
 def parse_args(input_args=None):
-    parser = argparse.ArgumentParser(description="Создает файл excel с необходимыми данными.")
+    parser = argparse.ArgumentParser(description="Создает файлы excel с необходимыми данными.")
     parser.add_argument("--input_path", help='Входной путь к файлу', required=True)
     parser.add_argument("--output_path", help='Результат', required=True)
     args = parser.parse_known_args(input_args)[0]
@@ -24,7 +24,7 @@ def json_reader(filename, data=None):
     return data
 
 
-def get_cards(data,cards = []):
+def get_cards(data, cards=[]):
     '''Создает объект список объектов из json-файла Card'''
     for card in data['cards']:
         card = Card(id=card['_id'],
@@ -35,7 +35,7 @@ def get_cards(data,cards = []):
     return cards
 
 
-def change_id_to_name(data,cards,users={},labels={}):
+def change_id_to_name(data, cards, users={}, labels={}):
     '''Изменяет все id объектов на имена'''
     for user in data['users']:
         users[user['_id']] = user['username']
@@ -48,46 +48,60 @@ def change_id_to_name(data,cards,users={},labels={}):
     return cards
 
 
-def filter_cards(cards,cards_projects=[]):
+def filter_cards(cards, cards_projects=[], other_projects=[]):
     '''Фильтрует карточки по названиям проектов'''
-    sdf = []
-    fds = []
     for card in cards:
         labels = card.labels.split(', ')
         for label in labels:
             if label in OTHER_LABELS:
-                sdf.append(card)
+                other_projects.append(card)
             if label in TIME_LABELS:
                 card.hours += TIME_LABELS[label]
             if label in LABELS:
                 card.labels = label
                 cards_projects.append(card)
-    for card in sdf:
+
+    for card in list(other_projects):
         labels = card.labels.split(', ')
         for label in labels:
-            if label not in LABELS:
-                fds.append(card)
-    return cards_projects
+            if label in LABELS:
+                other_projects.remove(card)
+            if label in OTHER_LABELS:
+                card.labels = label
+    return cards_projects, other_projects
 
 
-def pandas_df(cards, path):
+def pandas_df(cards, other_cards, path):
     '''Создаёт таблицы excel'''
-    cards = pd.DataFrame(cards)
-    cards.to_excel(f'{path}/Cards.xlsx',index=False)
-    workbook = load_workbook(filename=f"{path}/Cards.xlsx")
-    sheet = workbook.active
-    set_style_cards(sheet)
-    workbook.save(filename=f"{path}/Cards.xlsx")
+    in_proj = Card(labels='InProjects',
+                   id='',
+                   title='',
+                   creator='')
+    for card in other_cards:
+        in_proj.hours += card.hours
 
-    projects_sum = cards.groupby('labels').apply(lambda x: x.groupby('id').hours.first().sum()).reset_index(name='hours')
+    projects_table = pd.DataFrame(cards)
+    projects_sum = projects_table.groupby('labels').apply(lambda x: x.groupby('id').hours.first().sum()).reset_index(name='hours')
+    df2 = pd.DataFrame({'labels': [in_proj.labels], 'hours': [in_proj.hours]})
+    projects_sum = projects_sum.append(df2)
     projects_sum.to_excel(f'{path}/Projects.xlsx', index=False)
     workbook = load_workbook(filename=f"{path}/Projects.xlsx")
     sheet = workbook.active
     set_style_creators(sheet)
     workbook.save(filename=f"{path}/Projects.xlsx")
 
-    employee_sum = cards.groupby('creator').apply(lambda x: x.groupby('id').hours.first().sum()).reset_index(name='hours')
-    employee_sum.to_excel(f'{path}/Employee.xlsx', index=False)
+    for card in other_cards:
+        cards.append(card)
+
+    cards_table = pd.DataFrame(cards)
+    cards_table.to_excel(f'{path}/Cards.xlsx', index=False)
+    workbook = load_workbook(filename=f"{path}/Cards.xlsx")
+    sheet = workbook.active
+    set_style_cards(sheet)
+    workbook.save(filename=f"{path}/Cards.xlsx")
+
+    employee_table = cards_table.groupby('creator').apply(lambda x: x.groupby('id').hours.first().sum()).reset_index(name='hours')
+    employee_table.to_excel(f'{path}/Employee.xlsx', index=False)
     workbook = load_workbook(filename=f"{path}/Employee.xlsx")
     sheet = workbook.active
     set_style_creators(sheet, employee=True)
@@ -102,8 +116,8 @@ def main(input_args=None):
     data = json_reader(input_path)
     cards = get_cards(data)
     cards = change_id_to_name(data, cards)
-    cards_projects = filter_cards(cards)
-    pandas_df(cards_projects, output_path)
+    cards_projects, other_projects = filter_cards(cards)
+    pandas_df(cards_projects, other_projects, output_path)
 
 
 if __name__ == "__main__":

@@ -9,8 +9,9 @@ header.border = Border(bottom=Side(border_style="thin"),
                        right=Side(border_style="thin"))
 header.alignment = Alignment(horizontal="center", vertical="center")
 header.fill = PatternFill(start_color='52cc00',
-                   end_color='52cc00',
-                   fill_type='solid')
+                          end_color='52cc00',
+                          fill_type='solid')
+
 
 def set_style_cards(sheet):
     '''Форматирует таблицу'''
@@ -29,9 +30,9 @@ def set_style_cards(sheet):
     for i in 'ABCD':
         for cell in sheet[i]:
             cell.border = Border(bottom=Side(border_style="thin"),
-                                   top=Side(border_style="thin"),
-                                   left=Side(border_style="thin"),
-                                   right=Side(border_style="thin"))
+                                 top=Side(border_style="thin"),
+                                 left=Side(border_style="thin"),
+                                 right=Side(border_style="thin"))
     return sheet
 
 
@@ -49,8 +50,8 @@ def set_style_creators(sheet, employee=False):
     for i in 'AB':
         for cell in sheet[i]:
             cell.border = Border(bottom=Side(border_style="thin"),
-                                   top=Side(border_style="thin"),
-                                   left=Side(border_style="thin"),
-                                   right=Side(border_style="thin"))
+                                 top=Side(border_style="thin"),
+                                 left=Side(border_style="thin"),
+                                 right=Side(border_style="thin"))
 
     return sheet
