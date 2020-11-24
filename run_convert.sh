@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-echo "Convert json to xsls"
+echo "CONVERT JSON TO SPREADSHEETS"
 
 function main() {
-  cd JsonToExcelParser
 
   if [ ! -d tables ]
     then
       mkdir -p tables
     fi
-  python main.py --input_path=test/wekan.json --output_path=tables/
+  python JsonToExcelParser/main.py --input_path=test/wekan.json --output_path=tables/
   cd ..
 }
 

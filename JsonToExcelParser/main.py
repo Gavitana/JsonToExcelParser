@@ -4,9 +4,9 @@ import pandas as pd
 from pathlib import Path
 from openpyxl import load_workbook
 
-from classes import Card
-from config import LABELS, TIME_LABELS, OTHER_LABELS
-from styles import set_style_cards, set_style_creators
+from JsonToExcelParser.classes import Card
+from JsonToExcelParser.config import LABELS, TIME_LABELS, OTHER_LABELS
+from JsonToExcelParser.styles import set_style_cards, set_style_creators
 
 
 def parse_args(input_args=None):
@@ -24,8 +24,9 @@ def json_reader(filename, data=None):
     return data
 
 
-def get_cards(data, cards=[]):
+def get_cards(data):
     '''Создает список объектов Card из json-файла '''
+    cards=[]
     for card in data["cards"]:
         card = Card(id=card["_id"],
                     creator=card["userId"],
@@ -35,8 +36,10 @@ def get_cards(data, cards=[]):
     return cards
 
 
-def change_id_to_name(data, cards, users={}, labels={}):
+def change_id_to_name(data, cards):
     '''Изменяет все id объектов на имена'''
+    users={}
+    labels={}
     for user in data["users"]:
         users[user["_id"]] = user["username"]
     for label in data["labels"]:
@@ -48,8 +51,10 @@ def change_id_to_name(data, cards, users={}, labels={}):
     return cards
 
 
-def filter_cards(cards, cards_projects=[], other_projects=[]):
+def filter_cards(cards):
     '''Фильтрует карточки по названиям проектов'''
+    cards_projects=[]
+    other_projects=[]
     for card in cards:
         labels = card.labels.split(",")
         for label in labels:
