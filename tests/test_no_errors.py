@@ -5,7 +5,7 @@ from JsonToExcelParser.main import json_reader, get_cards, change_id_to_name, fi
 
 
 class TestMain(unittest.TestCase):
-    data = json_reader("test/wekan.json")
+    data = json_reader("tests/wekan.json")
 
     def test_main(self):
         '''Тест функции get_cards'''
