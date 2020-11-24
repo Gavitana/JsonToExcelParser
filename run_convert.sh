@@ -8,8 +8,8 @@ function main() {
     then
       mkdir -p tables
     fi
-  python JsonToExcelParser/main.py --input_path=test/wekan.json --output_path=tables/
-  cd ..
+  python JsonToExcelParser/main.py --input_path=JsonToExcelParser/tests/wekan.json --output_path=tables/
+
 }
 
 main

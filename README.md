@@ -9,6 +9,7 @@ python JsonToExcelParser/main.py --input_path="Путь к файлу json" --ou
 ### Запустить тесты
 
 ```
+cd JsonToExcelParser
 python -m unittest
 ```
 

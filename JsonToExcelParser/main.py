@@ -4,9 +4,9 @@ import pandas as pd
 from pathlib import Path
 from openpyxl import load_workbook
 
-from JsonToExcelParser.classes import Card
-from JsonToExcelParser.config import LABELS, TIME_LABELS, OTHER_LABELS
-from JsonToExcelParser.styles import set_style_cards, set_style_creators
+from classes import Card
+from config import LABELS, TIME_LABELS, OTHER_LABELS
+from styles import set_style_cards, set_style_creators
 
 
 def parse_args(input_args=None):
