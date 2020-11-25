@@ -26,35 +26,44 @@ def json_reader(filename, data=None):
 
 def get_cards(data):
     '''Создает список объектов Card из json-файла '''
-    cards=[]
+    cards = []
     for card in data["cards"]:
-        card = Card(id=card["_id"],
-                    creator=card["userId"],
-                    labels=(",".join(card["labelIds"])),
-                    title=card["title"])
+        if card["assignees"] != []:
+            card = Card(id=card["_id"],
+                        creator=card["assignees"][0],
+                        labels=(",".join(card["labelIds"])),
+                        title=card["title"])
+        else:
+            card = Card(id=card["_id"],
+                        labels=(",".join(card["labelIds"])),
+                        title=card["title"])
         cards.append(card)
     return cards
 
 
 def change_id_to_name(data, cards):
     '''Изменяет все id объектов на имена'''
-    users={}
-    labels={}
+    users = {}
+    labels = {}
     for user in data["users"]:
         users[user["_id"]] = user["username"]
     for label in data["labels"]:
         labels[label["_id"]] = label["name"]
     for card in cards:
         lab = card.labels
-        card.creator = users[card.creator]
+        if card.creator == "Никто не назначен":
+            pass
+        else:
+            card.creator = users[card.creator]
         card.labels = ",".join([labels.get(lab, lab) for lab in lab.split(",")])
     return cards
 
 
 def filter_cards(cards):
     '''Фильтрует карточки по названиям проектов'''
-    cards_projects=[]
-    other_projects=[]
+    cards_projects = []
+    other_projects = []
+
     for card in cards:
         labels = card.labels.split(",")
         for label in labels:
